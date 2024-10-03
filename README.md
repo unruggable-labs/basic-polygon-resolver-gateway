@@ -1,8 +1,9 @@
-# Simple Polygon Resolver for ResolverWorks
+# Simple Polygon Resolver for ResolverWorks By Unruggable
 
 A simple ENSIP-10 resolver and basic gateway (express) that returns appropriately encoded data directly from a configured RPC.
 
 - Install dependencies with:
+
 ```bash
 bun install
 ```
