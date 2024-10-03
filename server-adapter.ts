@@ -4,9 +4,7 @@ import { Contract, JsonRpcProvider, AbiCoder } from "ethers";
 const ABI_CODER = new AbiCoder();
 
 //Using mainnet for now
-const provider = new JsonRpcProvider(
-  "https://eth-mainnet.g.alchemy.com/v2/" + process.env.ALCHEMY_API_KEY
-); // Replace with actual provider URL
+const provider = new JsonRpcProvider(process.env.RPC_URL); // Replace with actual provider URL
 
 const registryABI = [
   "function addr(bytes32 node) external view returns (address)",
