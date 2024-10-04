@@ -4,7 +4,7 @@ import { Contract, JsonRpcProvider, AbiCoder } from "ethers";
 const ABI_CODER = new AbiCoder();
 const provider = new JsonRpcProvider(process.env.RPC_URL);
 const registryABI = [
-  "function addr(bytes32 node) external view returns (address)",
+  "function addr(uint256 token, uint256 coinType) external view returns (bytes)",
   "function text(bytes32 node, string key) view returns (string text)",
   "function contenthash(bytes32 node) external view returns (bytes memory)",
 ];
