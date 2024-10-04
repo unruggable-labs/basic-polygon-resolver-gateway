@@ -21,7 +21,7 @@ export default createServerAdapter(async (request: Request) => {
 
   if (request.method !== "POST") {
     console.log("Rejecting non-POST request");
-    return errorResponse("Only POST requests are allowed", 405);
+    // return errorResponse("Only POST requests are allowed", 405);
   }
 
   try {
