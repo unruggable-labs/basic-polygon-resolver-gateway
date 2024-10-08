@@ -32,8 +32,10 @@ process.exit();
 
 const SECOND_SLOT = 87071186389396449722442602571067717484874720571345030057314163563846503330911n
 
+const YOUR_INFURA_KEY = '';
+
 const foundry = await Foundry.launch({
-    fork: "https://mainnet.infura.io/v3/2Ld6rg9FWkt9Xqi0lNbgWAa10om",
+    fork: `https://mainnet.infura.io/v3/${YOUR_INFURA_KEY}`,
     procLog  : true,
     infoLog  : true,
 });
