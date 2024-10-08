@@ -5,6 +5,7 @@ A simple ENSIP-10 resolver and basic gateway (express) that returns appropriatel
 - Install dependencies with:
 ```bash
 bun install
+foundry install
 ```
 
 - Add your Infura key in `server-adapters.ts`

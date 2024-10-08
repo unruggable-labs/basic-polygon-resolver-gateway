@@ -10,7 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@adraffy/blocksmith": "^0.0.35",
+    "@adraffy/blocksmith": "https://github.com/clowestab/blocksmith.js.git",
     "@whatwg-node/server": "^0.9.49",
     "express": "^4.21.0"
   },

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
+/// L1 Resolver for resolving names from Polygon using the 'simple polygon resolver'
+/// @author clowes.eth
 contract PolygonResolver {
 
     error OffchainLookup(address sender, string[] urls, bytes callData, bytes4 callbackFunction, bytes extraData);
@@ -48,14 +50,16 @@ contract PolygonResolver {
      */
     function resolve(bytes calldata name, bytes calldata data) external view returns(bytes memory) {
 
+        (bytes32 labelhash, uint256 _nIdx) = readLabel(name, 0);
+
         string[] memory urls = new string[](1);
         urls[0] = gatewayUrl;
         revert OffchainLookup(
             address(this),
             urls,
-            data,
+            abi.encode(labelhash, data),
             PolygonResolver.resolveCallback.selector,
-            data
+            name
         );
     }
 
@@ -63,10 +67,46 @@ contract PolygonResolver {
     /**
      */
     function resolveCallback(bytes calldata response, bytes calldata extraData) external view returns(bytes memory) {
-
-        bytes4 selector = bytes4(extraData[:4]);
-
-        //if (selector == )
         return response;
+    }
+
+
+    /*
+     * @dev Returns the keccak-256 hash of a byte range.
+     * @param self The byte string to hash.
+     * @param offset The position to start hashing at.
+     * @param len The number of bytes to hash.
+     * @return The hash of the byte range.
+     */
+    function keccak(
+        bytes memory self,
+        uint256 offset,
+        uint256 len
+    ) internal pure returns (bytes32 ret) {
+        require(offset + len <= self.length);
+        assembly {
+            ret := keccak256(add(add(self, 32), offset), len)
+        }
+    }
+
+    /**
+     * @dev Returns the keccak-256 hash of a DNS-encoded label, and the offset to the start of the next label.
+     * @param self The byte string to read a label from.
+     * @param idx The index to read a label at.
+     * @return labelhash The hash of the label at the specified index, or 0 if it is the last label.
+     * @return newIdx The index of the start of the next label.
+     */
+    function readLabel(
+        bytes memory self,
+        uint256 idx
+    ) internal pure returns (bytes32 labelhash, uint256 newIdx) {
+        require(idx < self.length, "readLabel: Index out of bounds");
+        uint256 len = uint256(uint8(self[idx]));
+        if (len > 0) {
+            labelhash = keccak(self, idx + 1, len);
+        } else {
+            labelhash = bytes32(0);
+        }
+        newIdx = idx + len + 1;
     }
 }
