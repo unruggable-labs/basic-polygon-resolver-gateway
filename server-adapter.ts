@@ -45,7 +45,6 @@ export default (provider: Provider, registryAddress: string) => {
       const fn = registryContract.interface.getFunction(functionSelector);
       const fullFunctionName = fn?.format("minimal");
 
-      console.log("Function Name:", fullFunctionName);
       if (!fn) {
         return errorResponse(
           `Unsupported function selector ${functionSelector}`
@@ -58,11 +57,12 @@ export default (provider: Provider, registryAddress: string) => {
       )!;
       const modifiedFunctionData = [labelhash, ...decodedFunctionData.slice(1)];
 
-      console.log("Decoded function data:", decodedFunctionData);
       const result = await registryContract[functionSelector](
         ...modifiedFunctionData
       );
 
+      console.log("Function Name:", fullFunctionName);
+      console.log("Decoded function data:", decodedFunctionData);
       console.log("Result:", result);
       const encodedResult = registryContract.interface.encodeFunctionResult(
         fn,
