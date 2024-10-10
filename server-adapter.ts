@@ -13,10 +13,12 @@ const registryABI = [
 ];
 
 export default (provider: Provider, registryAddress: string) => {
-  
   return createServerAdapter(async (request: Request) => {
-
-    const registryContract = new Contract(registryAddress, registryABI, provider);
+    const registryContract = new Contract(
+      registryAddress,
+      registryABI,
+      provider
+    );
 
     if (request.method !== "POST") {
       console.log("Rejecting non-POST request");
@@ -33,36 +35,47 @@ export default (provider: Provider, registryAddress: string) => {
         return errorResponse("Missing calldata");
       }
 
-      const [labelhash, calldata] = ABI_CODER.decode(["bytes32", "bytes"], wCalldata);
- 
+      console.log("Processing request:", wCalldata);
+      console.log("Sender:", sender);
+      const [labelhash, calldata] = ABI_CODER.decode(
+        ["bytes32", "bytes"],
+        wCalldata
+      );
+
       const functionSelector = calldata.slice(0, 10);
 
       const fn = registryContract.interface.getFunction(functionSelector);
       const fullFunctionName = fn?.format("minimal");
 
+      console.log("Function selector:", functionSelector);
       if (!fn) {
-        return errorResponse(`Unsupported function selector ${functionSelector}`);
+        return errorResponse(
+          `Unsupported function selector ${functionSelector}`
+        );
       }
 
-      const decodedFunctionData = registryContract.interface.decodeFunctionData(fn, calldata)!;
+      const decodedFunctionData = registryContract.interface.decodeFunctionData(
+        fn,
+        calldata
+      )!;
       const modifiedFunctionData = [labelhash, ...decodedFunctionData.slice(1)];
 
       const result = await registryContract[functionSelector](
         ...modifiedFunctionData
       );
 
+      console.log("Result:", result);
       const encodedResult = registryContract.interface.encodeFunctionResult(
         fn,
         [result]
       );
 
       return successResponse(encodedResult);
-      
     } catch (error) {
       return errorResponse("Failed to process request", 500);
     }
   });
-}
+};
 
 const successResponse = (data: string, status: number = 200) => {
   console.log("Sending success response:", data);
