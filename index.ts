@@ -7,7 +7,8 @@ const app = express();
 //Modify these values to run the gateway
 const provider = new JsonRpcProvider(process.env.RPC_URL);
 const l2RegistryResolverAddress = process.env.REGISTRY_URL as string;
-
+console.log("Using provider:", provider);
+console.log("REGISTRY_URL", l2RegistryResolverAddress);
 const builtAdapter = serverAdapter(provider, l2RegistryResolverAddress);
 
 // Bind our adapter to `/mypath` endpoint
