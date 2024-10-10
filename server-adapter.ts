@@ -40,11 +40,14 @@ export default (provider: Provider, registryAddress: string) => {
         ["bytes32", "bytes"],
         wCalldata
       );
+      console.log("--Full call data", calldata);
 
       const functionSelector = calldata.slice(0, 10);
 
       const fn = registryContract.interface.getFunction(functionSelector);
       const fullFunctionName = fn?.format("minimal");
+
+      console.log("--Function Name:", fullFunctionName);
 
       if (!fn) {
         return errorResponse(
@@ -56,6 +59,8 @@ export default (provider: Provider, registryAddress: string) => {
         fn,
         calldata
       )!;
+      console.log("Decoded function data:", decodedFunctionData);
+
       const modifiedFunctionData = [labelhash, ...decodedFunctionData.slice(1)];
 
       const result = await registryContract[functionSelector](
@@ -64,7 +69,7 @@ export default (provider: Provider, registryAddress: string) => {
 
       console.log("Function Name:", fullFunctionName);
       console.log("Full call data", calldata);
-      console.log("Decoded function data:", modifiedFunctionData);
+      console.log("function data:", modifiedFunctionData);
       console.log("Result:", result);
       const encodedResult = registryContract.interface.encodeFunctionResult(
         fn,
