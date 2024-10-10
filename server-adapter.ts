@@ -20,10 +20,11 @@ export default (provider: Provider, registryAddress: string) => {
       provider
     );
 
-    // if (request.method !== "POST") {
-    //   console.log("Rejecting non-POST request");
-    //   return errorResponse("Only POST requests are allowed", 405);
-    // }
+    if (request.method === "GET") {
+      console.log("Rejecting non-GET request");
+      return errorResponse("Only non-GET requests are allowed", 405);
+    }
+    console.log("Request received", request);
 
     try {
       const requestBody = await request.text();
@@ -83,7 +84,7 @@ const successResponse = (data: string, status: number = 200) => {
   return new Response(JSON.stringify({ data }), {
     status: status,
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "text/plain",
     },
   });
 };
