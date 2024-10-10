@@ -2,7 +2,7 @@
 /// Basic server adapter for resolving from Layer 2
 
 import { createServerAdapter } from "@whatwg-node/server";
-import { Contract, AbiCoder, Provider } from "ethers";
+import { Contract, AbiCoder, Provider, dataSlice } from "ethers";
 
 const ABI_CODER = new AbiCoder();
 const registryABI = [
@@ -41,7 +41,7 @@ export default (provider: Provider, registryAddress: string) => {
       console.log("6. Decoding ABI", wCalldata);
       const [labelhash, calldata] = ABI_CODER.decode(
         ["bytes32", "bytes"],
-        wCalldata
+        dataSlice(wCalldata, 4)
       );
       console.log("--Full call data", calldata);
 
