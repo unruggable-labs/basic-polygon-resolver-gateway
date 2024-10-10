@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 import serverAdapter from "./server-adapter";
 import { JsonRpcProvider } from "ethers";
 import cors from "cors";
@@ -9,7 +9,7 @@ const app = express();
 app.use(cors());
 
 // Middleware to handle OPTIONS requests
-app.options("*", (_req: Request, res: Response) => {
+app.options("*", (req, res) => {
   res.sendStatus(200);
 });
 
