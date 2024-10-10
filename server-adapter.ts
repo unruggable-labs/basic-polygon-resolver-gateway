@@ -72,6 +72,7 @@ export default (provider: Provider, registryAddress: string) => {
 
       return successResponse(encodedResult);
     } catch (error) {
+      console.log("ERROR: ", error);
       return errorResponse("Failed to process request", 500);
     }
   });
