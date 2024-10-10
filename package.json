@@ -13,6 +13,7 @@
   "dependencies": {
     "@adraffy/blocksmith": "https://github.com/clowestab/blocksmith.js.git",
     "@whatwg-node/server": "^0.9.49",
+    "cors": "^2.8.5",
     "express": "^4.21.0"
   },
   "devDependencies": {

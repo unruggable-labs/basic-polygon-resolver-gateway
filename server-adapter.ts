@@ -62,6 +62,7 @@ export default (provider: Provider, registryAddress: string) => {
       );
 
       console.log("Function Name:", fullFunctionName);
+      console.log("Full call data", calldata);
       console.log("Decoded function data:", modifiedFunctionData);
       console.log("Result:", result);
       const encodedResult = registryContract.interface.encodeFunctionResult(

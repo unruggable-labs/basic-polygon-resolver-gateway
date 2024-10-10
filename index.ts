@@ -1,8 +1,17 @@
 import express from "express";
 import serverAdapter from "./server-adapter";
 import { JsonRpcProvider } from "ethers";
+import cors from "cors";
 
 const app = express();
+
+// Enable CORS for all routes
+app.use(cors());
+
+// Middleware to handle OPTIONS requests
+app.options("*", (req, res) => {
+  res.sendStatus(200);
+});
 
 //Modify these values to run the gateway
 const provider = new JsonRpcProvider(process.env.RPC_URL);
