@@ -20,10 +20,10 @@ export default (provider: Provider, registryAddress: string) => {
       provider
     );
 
-    if (request.method !== "POST") {
-      console.log("Rejecting non-POST request");
-      return errorResponse("Only POST requests are allowed", 405);
-    }
+    // if (request.method !== "POST") {
+    //   console.log("Rejecting non-POST request");
+    //   return errorResponse("Only POST requests are allowed", 405);
+    // }
 
     try {
       const requestBody = await request.text();
