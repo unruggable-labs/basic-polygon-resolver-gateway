@@ -31,6 +31,16 @@ contract PolygonResolver {
         owner = msg.sender;
     }
 
+
+    /**
+     * @dev Allows the owner to change the gateway URL
+     * @param _newGatewayUrl The new gateway URL to set
+     */
+    function setGatewayUrl(string memory _newGatewayUrl) external onlyOwner {
+        gatewayUrl = _newGatewayUrl;
+    }
+    
+
     /**
      * Implemented as part of the ERC165 interface => Standard Interface Detection
      * https://ethtools.com/interface-database/ERC165
