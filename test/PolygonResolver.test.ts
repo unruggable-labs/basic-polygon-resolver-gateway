@@ -61,7 +61,7 @@ const labelhash = keccak256(toUtf8Bytes(SUBNAME_LABEL));
 
 await foundry.confirm(registry.addRegistrar(deployerWallet.address));
 await foundry.confirm(registry.register(SUBNAME_LABEL, deployerWallet.address, 1886161968));
-await foundry.confirm(registry.setAddr(labelhash, COIN_TYPE_ETH, deployerWallet.address));
+//await foundry.confirm(registry.setAddr(labelhash, COIN_TYPE_ETH, deployerWallet.address));
 await foundry.confirm(registry.setText(labelhash, "avatar", "eip155:1/erc1155:0xb32979486938aa9694bfc898f35dbed459f44424/10063"));
 
 const builtAdapter = serverAdapter(foundry.provider, registry.target);

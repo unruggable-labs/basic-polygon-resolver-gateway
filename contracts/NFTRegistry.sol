@@ -128,6 +128,7 @@ contract NFTRegistry is ERC721, AccessControl {
         _safeMint(owner, tokenId);
         _expiries[labelhash] = expiry;
         _labels[labelhash] = label;
+        _setAddr(labelhash, COIN_TYPE_ETH, abi.encodePacked(owner));
         totalSupply++;
         emit Registered(label, owner);
     }
@@ -205,7 +206,7 @@ contract NFTRegistry is ERC721, AccessControl {
     function _setAddr(
         bytes32 labelhash,
         uint256 coinType,
-        bytes calldata value
+        bytes memory value
     ) internal {
         _addrs[labelhash][coinType] = value;
         emit AddrChanged(labelhash, coinType, value);
