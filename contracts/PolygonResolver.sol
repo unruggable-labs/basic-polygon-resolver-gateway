@@ -4,19 +4,24 @@ pragma solidity ^0.8.25;
 /// L1 Resolver for resolving names from Polygon using the 'simple polygon resolver'
 /// @author clowes.eth
 contract PolygonResolver {
+    error OffchainLookup(
+        address sender,
+        string[] urls,
+        bytes callData,
+        bytes4 callbackFunction,
+        bytes extraData
+    );
 
-    error OffchainLookup(address sender, string[] urls, bytes callData, bytes4 callbackFunction, bytes extraData);
-
-    uint constant private COIN_TYPE_ETH = 60;
+    uint private constant COIN_TYPE_ETH = 60;
 
     /// ERC-165 => Standard Interface Detection
     /// supportsInterface(bytes4)
-    bytes4 constant private INTERFACE_ID_ERC_165 = 0x01ffc9a7;
+    bytes4 private constant INTERFACE_ID_ERC_165 = 0x01ffc9a7;
 
     /// ENSIP-10 => Wildcard Resolution
     /// resolve(bytes calldata name, bytes calldata data) external view returns(bytes)
     /// https://ethtools.com/interface-database/IExtendedResolver
-    bytes4 constant private INTERFACE_ID_ENSIP_10 = 0x9061b923;
+    bytes4 private constant INTERFACE_ID_ENSIP_10 = 0x9061b923;
 
     string public gatewayUrl;
     address public owner;
@@ -32,24 +37,36 @@ contract PolygonResolver {
     }
 
     /**
+     * @dev Allows the owner to change the gateway URL
+     * @param _newGatewayUrl The new gateway URL to set
+     */
+    function setGatewayUrl(string memory _newGatewayUrl) external onlyOwner {
+        gatewayUrl = _newGatewayUrl;
+    }
+
+    /**
      * Implemented as part of the ERC165 interface => Standard Interface Detection
      * https://ethtools.com/interface-database/ERC165
      * https://eips.ethereum.org/EIPS/eip-165
      */
-    function supportsInterface(bytes4 interfaceID) external pure returns (bool) {
-		return interfaceID == INTERFACE_ID_ERC_165 
-        || interfaceID == INTERFACE_ID_ENSIP_10;
+    function supportsInterface(
+        bytes4 interfaceID
+    ) external pure returns (bool) {
+        return
+            interfaceID == INTERFACE_ID_ERC_165 ||
+            interfaceID == INTERFACE_ID_ENSIP_10;
         //|| interfaceID == 0xbc1c58d1;
-	}
- 
-    
+    }
+
     /**
      * Implemented as part of the IExtendedResolver interface defined in ENSIP-10 => Wildcard Resolution
      * https://ethtools.com/interface-database/IExtendedResolver
      * ENSIP-10 - https://docs.ens.domains/ensip/10
      */
-    function resolve(bytes calldata name, bytes calldata data) external view returns(bytes memory) {
-
+    function resolve(
+        bytes calldata name,
+        bytes calldata data
+    ) external view returns (bytes memory) {
         (bytes32 labelhash, uint256 _nIdx) = readLabel(name, 0);
 
         string[] memory urls = new string[](1);
@@ -63,13 +80,14 @@ contract PolygonResolver {
         );
     }
 
-
     /**
      */
-    function resolveCallback(bytes calldata response, bytes calldata extraData) external view returns(bytes memory) {
+    function resolveCallback(
+        bytes calldata response,
+        bytes calldata extraData
+    ) external view returns (bytes memory) {
         return response;
     }
-
 
     /*
      * @dev Returns the keccak-256 hash of a byte range.
