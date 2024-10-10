@@ -41,7 +41,7 @@ export default (provider: Provider, registryAddress: string) => {
       console.log("6. Decoding ABI", wCalldata);
       const [labelhash, calldata] = ABI_CODER.decode(
         ["bytes32", "bytes"],
-        dataSlice(wCalldata, 4)
+        wCalldata
       );
       console.log("--Full call data", calldata);
 
