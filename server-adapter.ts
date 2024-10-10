@@ -35,8 +35,6 @@ export default (provider: Provider, registryAddress: string) => {
         return errorResponse("Missing calldata");
       }
 
-      console.log("Processing request:", wCalldata);
-      console.log("Sender:", sender);
       const [labelhash, calldata] = ABI_CODER.decode(
         ["bytes32", "bytes"],
         wCalldata
@@ -60,6 +58,7 @@ export default (provider: Provider, registryAddress: string) => {
       )!;
       const modifiedFunctionData = [labelhash, ...decodedFunctionData.slice(1)];
 
+      console.log("Decoded function data:", decodedFunctionData);
       const result = await registryContract[functionSelector](
         ...modifiedFunctionData
       );
