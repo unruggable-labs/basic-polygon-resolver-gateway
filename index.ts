@@ -8,11 +8,6 @@ const app = express();
 // Enable CORS for all routes
 app.use(cors());
 
-// Middleware to handle OPTIONS requests
-app.options("*", (req, res) => {
-  res.sendStatus(200);
-});
-
 //Modify these values to run the gateway
 const provider = new JsonRpcProvider(process.env.RPC_URL);
 const l2RegistryResolverAddress = process.env.REGISTRY_ADDRESS as string;
