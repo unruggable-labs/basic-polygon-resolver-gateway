@@ -38,7 +38,7 @@ export default (provider: Provider, registryAddress: string) => {
       if (!wCalldata) {
         return errorResponse("Missing calldata");
       }
-      console.log("6. Decoding ABI");
+      console.log("6. Decoding ABI", wCalldata);
       const [labelhash, calldata] = ABI_CODER.decode(
         ["bytes32", "bytes"],
         wCalldata
