@@ -47,7 +47,7 @@ export default (provider: Provider, registryAddress: string) => {
       const fn = registryContract.interface.getFunction(functionSelector);
       const fullFunctionName = fn?.format("minimal");
 
-      console.log("Function selector:", functionSelector);
+      console.log("Function Name:", fullFunctionName);
       if (!fn) {
         return errorResponse(
           `Unsupported function selector ${functionSelector}`
