@@ -14,6 +14,7 @@ const registryABI = [
 
 export default (provider: Provider, registryAddress: string) => {
   return createServerAdapter(async (request: Request) => {
+    console.log("1. Entering server adapter function");
     const registryContract = new Contract(
       registryAddress,
       registryABI,
@@ -24,10 +25,12 @@ export default (provider: Provider, registryAddress: string) => {
       console.log("Rejecting non-GET request");
       return errorResponse("Only non-GET requests are allowed", 405);
     }
-    console.log("Request received", request);
 
     try {
       const requestBody = await request.text();
+      console.log("3. Received request body:", requestBody);
+
+      console.log("4. Parsing JSON");
 
       const requestData = JSON.parse(requestBody);
 
@@ -35,7 +38,7 @@ export default (provider: Provider, registryAddress: string) => {
       if (!wCalldata) {
         return errorResponse("Missing calldata");
       }
-
+      console.log("6. Decoding ABI");
       const [labelhash, calldata] = ABI_CODER.decode(
         ["bytes32", "bytes"],
         wCalldata
