@@ -18,6 +18,8 @@ export default (provider: Provider, registryAddress: string) => {
 
     const registryContract = new Contract(registryAddress, registryABI, provider);
 
+    console.log("Received request:", request);
+    
     if (request.method !== "POST") {
       console.log("Rejecting non-POST request");
       return errorResponse("Only POST requests are allowed", 405);
