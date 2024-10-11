@@ -19,10 +19,22 @@ export default (provider: Provider, registryAddress: string) => {
     const registryContract = new Contract(registryAddress, registryABI, provider);
 
     console.log("Received request:", request);
-    
-    if (request.method !== "POST") {
+
+
+    if (!["POST", "OPTIONS"].includes(request.method)) {
       console.log("Rejecting non-POST request");
       return errorResponse("Only POST requests are allowed", 405);
+    }
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "POST, OPTIONS", 
+          "Access-Control-Allow-Headers": "Content-Type",
+        },
+      });
     }
 
     try {
@@ -72,6 +84,7 @@ const successResponse = (data: string, status: number = 200) => {
     status: status,
     headers: {
       "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*"
     },
   });
 };
@@ -82,6 +95,7 @@ const errorResponse = (message: string, status: number = 400) => {
     status: status,
     headers: {
       "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*"
     },
   });
 };
