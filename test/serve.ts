@@ -38,5 +38,3 @@ await serve(
 			"0xbd1e630bd00f12f0810083ea3bd2be936ead3b2fa84d1bd6690c77da043e9e02",
 	}
 );
-
-// https://resolverworks.github.io/ezccip.js/test/postman.html#endpoint=http%3A%2F%2Flocalhost%3A8000%2F&proto=ens&name=raffy&multi=inner&field=addr-&field=text-avatar

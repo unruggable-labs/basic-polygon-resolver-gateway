@@ -1,30 +1,11 @@
-# Simple Polygon Resolver for ResolverWorks
+### Setup
 
-An end to end solution for resolving names from a L2 chain using an ENSIP-10 compatible resolver deployed on L1 and a simple express gateway for facilitating cross chain communication.
+1. `bun i`
+1. `forge install`
+1. `bun test`
 
-Keyed based on subname label such that the multiple 2LDs can resolve to the same values.
 
-### Testing/Demo
+### Serve Demo
 
-- Install dependencies with:
-```bash
-bun install
-forge install
-```
-
-- **!!** Add your Infura key in `server-adapters.ts`
-
-- Run the test script with:
-
-```bash
-bun test test/PolygonResolver.test.ts
-```
-
-### Running the gateway
-
-- **!!** Set the appropriate parameters in `index.ts`, namely your Infura API key, and your L2 registry/resolver address (`NFTRegistry.sol`).
-- Run the gateway using:
-
-```bash
-bun start
-```
+1. `bun start`
+1. [Postman](https://resolverworks.github.io/ezccip.js/test/postman.html#endpoint=http%3A%2F%2Flocalhost%3A8000%2F&proto=ens&name=raffy&multi=inner&field=addr-&field=text-avatar)
