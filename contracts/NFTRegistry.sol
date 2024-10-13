@@ -91,14 +91,13 @@ contract NFTRegistry is ERC721, AccessControl {
         return baseUri;
     }
 
-    /// ERC721 overrides
-    function _update(
-        address to,
-        uint256 token,
-        address auth
-    ) internal override(ERC721) returns (address ret) {
-        ret = super._update(to, token, auth);
-    }
+    // function _update(
+    //     address to,
+    //     uint256 token,
+    //     address auth
+    // ) internal override(ERC721) returns (address ret) {
+    //     ret = super._update(to, token, auth);
+    // }
 
     /**
      * @dev Adds a registrar with the specified address.

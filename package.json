@@ -5,8 +5,8 @@
 		"start": "bun run test/serve.ts 8000"
 	},
 	"devDependencies": {
-		"@adraffy/blocksmith": "^0.0.39",
-		"@resolverworks/ezccip": "^0.0.18",
+		"@adraffy/blocksmith": "^0.0.40",
+		"@resolverworks/ezccip": "^0.0.19",
 		"@types/bun": "^1.1.11",
 		"ethers": "^6.13.4"
 	}

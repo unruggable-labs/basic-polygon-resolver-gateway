@@ -3,7 +3,7 @@ import type { Record } from "@resolverworks/ezccip";
 import { id as keccakStr } from "ethers";
 
 export async function deployDemo(foundry: Foundry) {
-	const registry = await foundry.deploy({
+	const nft = await foundry.deploy({
 		file: "NFTRegistry",
 		args: ["Test", "TEST", "https://"],
 	});
@@ -12,27 +12,27 @@ export async function deployDemo(foundry: Foundry) {
 		import "@src/NFTRegistry.sol";
 		contract Registrar {
 			function register(string memory label) external {
-				NFTRegistry(${registry.target}).register(label, msg.sender, uint64(block.timestamp + 365 * 86400));
+				NFTRegistry(${nft.target}).register(label, msg.sender, uint64(block.timestamp + 365 * 86400));
 			}
 		}	
 	`);
 
-	await foundry.confirm(registry.addRegistrar(registrar));
+	await foundry.confirm(nft.addRegistrar(registrar));
 
 	function fetchRecord(label: string): Record {
 		const token = keccakStr(label);
 		return {
 			text(key) {
-				return registry.text(token, key);
+				return nft.text(token, key);
 			},
 			addr(type) {
-				return registry.addr(token, type);
+				return nft.addr(token, type);
 			},
 			contenthash() {
-				return registry.contenthash(token);
+				return nft.contenthash(token);
 			},
 		};
 	}
 
-	return { registry, registrar, fetchRecord };
+	return { nft, registrar, fetchRecord };
 }

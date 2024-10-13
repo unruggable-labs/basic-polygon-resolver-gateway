@@ -11,10 +11,9 @@ function after(fn: () => Promise<void>) {
 
 async function deploy() {
 	const foundry = await Foundry.launch({ infoLog: false });
-	after(() => foundry.shutdown());
+	after(foundry.shutdown);
 
-	const { registry, registrar, fetchRecord } = await deployDemo(foundry);
-
+	const { nft, registrar, fetchRecord } = await deployDemo(foundry);
 	const ccip = await serve(async (name) => fetchRecord(name), {
 		protocol: "ens",
 	});
@@ -26,15 +25,14 @@ async function deploy() {
 
 	return {
 		foundry,
-		ccip,
-		registry,
+		nft,
 		registrar,
 		resolver,
-		record: fetchRecord,
+		fetchRecord,
 	};
 }
 
-async function register(name: string) {
+async function register(name = "chonk") {
 	const a = await deploy();
 	const owner = await a.foundry.ensureWallet(name);
 	await a.foundry.confirm(a.registrar.connect(owner).register(name)); // mint from owners wallet
@@ -44,19 +42,19 @@ async function register(name: string) {
 		a.resolver.target,
 		name
 	);
-	const registry = a.registry.connect(owner); // bind the registry to the owners wallet
-	return { ...a, registry, resolver, labelhash, name };
+	const registry = a.nft.connect(owner); // bind the registry to the owners wallet
+	return { ...a, registry, resolver, labelhash, name, owner };
 }
 
 test("addr()", async () => {
-	const a = await register("raffy");
+	const a = await register();
 	expect(await a.resolver.getAddress()).toEqual(
 		a.foundry.wallets[a.name].address
 	);
 });
 
 test(`text("bio")`, async () => {
-	const a = await register("chonk");
+	const a = await register();
 	const value = "CHONK!!!";
 	await a.foundry.confirm(a.registry.setText(a.labelhash, "bio", value));
 	expect(await a.resolver.getText("bio")).toEqual(value);
@@ -68,7 +66,7 @@ const VITALIK_BLOG = {
 	decoded: "ipfs://QmNiv9FodXu29MPFguLuZe4SBLd3DFar3m5UxaEwhuFqn1",
 };
 
-test(`contenthash`, async () => {
+test("contenthash()", async () => {
 	const a = await register("vitalik");
 	await a.foundry.confirm(
 		a.registry.setContenthash(a.labelhash, VITALIK_BLOG.encoded)
@@ -76,8 +74,8 @@ test(`contenthash`, async () => {
 	expect(await a.resolver.getContentHash()).toEqual(VITALIK_BLOG.decoded);
 });
 
-test(`setRecords`, async () => {
-	const a = await register("multi");
+test("setRecords()", async () => {
+	const a = await register();
 	await a.foundry.confirm(
 		a.registry.setRecords(
 			a.labelhash,
@@ -99,13 +97,80 @@ test(`setRecords`, async () => {
 	expect(await a.resolver.getContentHash()).toEqual(VITALIK_BLOG.decoded);
 });
 
-test("setText() from wrong owner => error", async () => {
-	const a = await register("chonk");
+test("safeTransferFrom()", async () => {
+	const a = await register("a");
+	const b = await a.foundry.ensureWallet("b");
+	await a.foundry.confirm(
+		a.registry.safeTransferFrom(a.owner.address, b.address, a.labelhash)
+	);
+	expect(await a.registry.ownerOf(a.labelhash)).toEqual(b.address);
+	//expect(await a.resolver.getAddress()).toEqual(b.address);
+});
+
+test("safeTransferFrom() approved owner", async () => {
+	const a = await register("a");
+	const b = await a.foundry.ensureWallet("b");
+	await a.foundry.confirm(a.registry.setApprovalForAll(b.address, true));
+	const c = await a.foundry.ensureWallet("c");
+	await a.foundry.confirm(
+		a.registry
+			.connect(b)
+			.safeTransferFrom(a.owner.address, c.address, a.labelhash)
+	);
+	expect(await a.registry.ownerOf(a.labelhash)).toEqual(c.address);
+});
+
+test("safeTransferFrom() wrong owner", async () => {
+	const a = await register("a");
+	const b = await a.foundry.ensureWallet("b");
+	expect(
+		a.foundry.confirm(
+			a.registry
+				.connect(b)
+				.safeTransferFrom(a.owner.address, b.address, a.labelhash)
+		)
+	).rejects.toThrow();
+});
+
+test("setAddr() from wrong owner", async () => {
+	const a = await register();
+	expect(
+		a.foundry.confirm(
+			a.registry
+				.connect(a.foundry.wallets.admin)
+				.setAddr(a.labelhash, 60, "0x")
+		)
+	).rejects.toThrow();
+});
+
+test("setText() from approved owner", async () => {
+	const a = await register();
+	const b = await a.foundry.ensureWallet("b");
+	await a.foundry.confirm(a.registry.setApprovalForAll(b.address, true));
+	await a.foundry.confirm(
+		a.registry.connect(b).setText(a.labelhash, "chonk", "chonk")
+	);
+	expect(await a.resolver.getText("chonk")).toEqual("chonk");
+});
+
+test("setText() from wrong owner", async () => {
+	const a = await register();
 	expect(
 		a.foundry.confirm(
 			a.registry
 				.connect(a.foundry.wallets.admin)
 				.setText(a.labelhash, "avatar", "x")
+		)
+	).rejects.toThrow();
+});
+
+test("setRecords() from wrong owner", async () => {
+	const a = await register();
+	expect(
+		a.foundry.confirm(
+			a.registry
+				.connect(a.foundry.wallets.admin)
+				.setRecords(a.labelhash, [])
 		)
 	).rejects.toThrow();
 });

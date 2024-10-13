@@ -7,7 +7,7 @@ const foundry = await Foundry.launch({
 	port: 31337
 });
 
-const { registry, registrar, fetchRecord } = await deployDemo(foundry);
+const { nft: registry, registrar, fetchRecord } = await deployDemo(foundry);
 
 await foundry.confirm(registrar.register("raffy"));
 await foundry.confirm(
@@ -21,7 +21,7 @@ await foundry.confirm(
 const port = parseInt(process.argv[2]) || 8000;
 
 await serve(
-	async (name) => {
+	(name) => {
 		// TODO: enforce name suffixes here
 		// eg. name.endsWith('.gon.id');
 
