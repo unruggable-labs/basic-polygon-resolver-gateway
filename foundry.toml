@@ -2,3 +2,7 @@
 src = "contracts"
 libs = ["lib"]
 solc = "0.8.25"
+
+remappings = [
+	'@openzeppelin/contracts=lib/openzeppelin-contracts/contracts/'
+]
