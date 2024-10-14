@@ -7,11 +7,11 @@ const foundry = await Foundry.launch({
 	port: 31337
 });
 
-const { nft: registry, registrar, fetchRecord } = await deployDemo(foundry);
+const { nft, registrar, fetchRecord } = await deployDemo(foundry);
 
 await foundry.confirm(registrar.register("raffy"));
 await foundry.confirm(
-	registry.setText(
+	nft.setText(
 		id("raffy"),
 		"avatar",
 		"https://raffy.antistupid.com/ens.jpg"

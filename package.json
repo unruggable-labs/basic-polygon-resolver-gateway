@@ -6,7 +6,7 @@
 	},
 	"devDependencies": {
 		"@adraffy/blocksmith": "^0.0.40",
-		"@resolverworks/ezccip": "^0.0.19",
+		"@resolverworks/ezccip": "^0.0.20",
 		"@types/bun": "^1.1.11",
 		"ethers": "^6.13.4"
 	}
