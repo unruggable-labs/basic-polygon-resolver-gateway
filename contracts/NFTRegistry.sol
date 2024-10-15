@@ -56,10 +56,6 @@ contract NFTRegistry is ERC721, AccessControl {
         uint256 coinType;
         bytes value;
     }
-    struct Cointype {
-        uint256 key;
-        string value;
-    }
 
     // AccessControl roles
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
