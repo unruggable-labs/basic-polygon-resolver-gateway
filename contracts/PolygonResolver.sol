@@ -1,4 +1,6 @@
-/// @author clowes.eth, raffy.eth
+/// @author clowes.eth
+/// @author raffy.eth
+/// @company Unruggable
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
@@ -36,7 +38,8 @@ error OffchainLookup(
 );
 
 contract PolygonResolver is Ownable, IERC165, IExtendedResolver {
-    event GatewayChanged();
+    event GatewayURLsChanged(string[] newGatewayURLs);
+    event SignerChanged(address signer, bool allow);
 
     error CCIPReadExpired(uint256 t); // ccip response is stale
     error CCIPReadUntrusted(address signed);
@@ -53,6 +56,8 @@ contract PolygonResolver is Ownable, IERC165, IExtendedResolver {
         }
     }
 
+    // https://ethtools.com/interface-database/ERC165
+    // https://ethtools.com/interface-database/IExtendedResolver
     function supportsInterface(bytes4 x) external pure returns (bool) {
         return
             x == type(IERC165).interfaceId ||
@@ -61,12 +66,12 @@ contract PolygonResolver is Ownable, IERC165, IExtendedResolver {
 
     function setSigner(address signer, bool allow) external onlyOwner {
         _signers[signer] = allow;
-        emit GatewayChanged();
+        emit SignerChanged(signer, allow);
     }
 
     function setGatewayURLs(string[] memory urls) external onlyOwner {
         _urls = urls;
-        emit GatewayChanged();
+        emit GatewayURLsChanged(urls);
     }
 
     function gatewayURLs() external view returns (string[] memory) {
@@ -90,6 +95,7 @@ contract PolygonResolver is Ownable, IERC165, IExtendedResolver {
         bytes calldata ccip,
         bytes calldata request
     ) external view returns (bytes memory) {
+        
         (bytes memory response, uint64 expires, bytes memory sig) = abi.decode(
             ccip,
             (bytes, uint64, bytes)

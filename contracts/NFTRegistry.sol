@@ -1,12 +1,14 @@
 /// @author clowes.eth
+/// @author raffy.eth
+/// @company Unruggable
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
-/// Registry/Resolver all in one for Layer 2
-/// @dev This contract works with ENSIP defined seletors, taking a labelhash as the keyed parameter
+/// @title Registry/Resolver All-in-one (for Layer 2)
+/// @dev The resolution functions works with standard selectors, switching out node for labelhash
 contract NFTRegistry is ERC721, AccessControl {
     function supportsInterface(
         bytes4 x
@@ -15,37 +17,37 @@ contract NFTRegistry is ERC721, AccessControl {
     }
 
     // ownership logic
-    function _isExpired(uint256 token) internal view returns (bool) {
-        return _expiries[token] < block.timestamp;
+    function _isExpired(bytes32 labelhash) internal view returns (bool) {
+        return _expiries[labelhash] < block.timestamp;
     }
     function _ownerOf(
-        uint256 token
+        uint256 tokenId
     ) internal view override(ERC721) returns (address owner) {
-        owner = _isExpired(token) ? address(0) : super._ownerOf(token);
+        owner = _isExpired(bytes32(tokenId)) ? address(0) : super._ownerOf(tokenId);
     }
-    modifier onlyTokenOperator(uint256 token) {
-        address owner = _ownerOf(uint256(token));
+    modifier onlyTokenOperator(bytes32 labelhash) {
+        address owner = _ownerOf(uint256(labelhash));
         if (owner != msg.sender && !isApprovedForAll(owner, msg.sender)) {
             revert Unauthorized();
         }
         _;
     }
 
-    /// Errors
+    // Errors
     error Unauthorized();
-    error TokenExpired(uint256 token, uint64 expiry);
+    error TokenExpired(bytes32 labelhash, uint64 expiry);
 
-    /// Events
+    // Events
     event Registered(string indexed label, address owner);
-    event TextChanged(uint256 indexed token, string indexed key, string value);
+    event TextChanged(bytes32 indexed labelhash, string indexed key, string value);
     event AddrChanged(
-        uint256 indexed token,
+        bytes32 indexed labelhash,
         uint256 indexed coinType,
         bytes value
     );
-    event ContenthashChanged(uint256 indexed token, bytes value);
+    event ContenthashChanged(bytes32 indexed labelhash, bytes value);
 
-    /// Structs to prevent stack too deep errors with multirecord updates
+    // Structs to prevent stack too deep errors with multirecord updates
     struct Text {
         string key;
         string value;
@@ -59,21 +61,21 @@ contract NFTRegistry is ERC721, AccessControl {
         string value;
     }
 
-    /// AccessControl roles
+    // AccessControl roles
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 
-    /// Constants
+    // Constants
     uint256 constant COIN_TYPE_ETH = 60;
 
-    /// Properties
+    // Properties
     uint256 public totalSupply;
     string public baseUri;
-    mapping(uint256 token => uint256) _expiries;
-    mapping(uint256 token => mapping(string key => string)) _texts;
-    mapping(uint256 token => mapping(uint256 coinType => bytes)) _addrs;
-    mapping(uint256 token => bytes) _chashes;
-    mapping(uint256 token => string) _labels;
+    mapping(bytes32 labelhash => uint256) _expiries;
+    mapping(bytes32 labelhash => mapping(string key => string)) _texts;
+    mapping(bytes32 labelhash => mapping(uint256 coinType => bytes)) _addrs;
+    mapping(bytes32 labelhash => bytes) _chashes;
+    mapping(bytes32 labelhash => string) _labels;
 
     constructor(
         string memory _name,
@@ -90,14 +92,6 @@ contract NFTRegistry is ERC721, AccessControl {
     function _baseURI() internal view override returns (string memory) {
         return baseUri;
     }
-
-    // function _update(
-    //     address to,
-    //     uint256 token,
-    //     address auth
-    // ) internal override(ERC721) returns (address ret) {
-    //     ret = super._update(to, token, auth);
-    // }
 
     /**
      * @dev Adds a registrar with the specified address.
@@ -124,127 +118,140 @@ contract NFTRegistry is ERC721, AccessControl {
         address owner,
         uint256 expiry
     ) external onlyRole(REGISTRAR_ROLE) {
-        uint256 token = uint256(keccak256(abi.encodePacked(label)));
+        bytes32 labelhash = keccak256(abi.encodePacked(label));
+        uint256 tokenId = uint256(labelhash);
         // This will fail if the node is already registered
-        _safeMint(owner, token);
-        _expiries[token] = expiry;
-        _labels[token] = label;
-        _setAddr(token, COIN_TYPE_ETH, abi.encodePacked(owner));
+        _safeMint(owner, tokenId);
+        _expiries[labelhash] = expiry;
+        _labels[labelhash] = label;
+        _setAddr(labelhash, COIN_TYPE_ETH, abi.encodePacked(owner));
         totalSupply++;
         emit Registered(label, owner);
     }
 
-    ////////////
-    /// Getters
-    ////////////
+    //
+    // Getters
+    //
 
-    /// Record level
+    // Record level
+
+    function addr(bytes32 labelhash) public view returns (address) {
+        return address(uint160(bytes20(_addr(labelhash, COIN_TYPE_ETH))));
+    }
 
     function addr(
-        uint256 token,
+        bytes32 labelhash,
         uint256 cointype
     ) external view returns (bytes memory) {
-        return _isExpired(token) ? new bytes(0) : _addrs[token][cointype];
+        return _addr(labelhash, cointype);
+    }
+
+    function _addr(
+        bytes32 labelhash,
+        uint256 cointype
+    ) internal view returns (bytes memory) {
+
+        return _isExpired(labelhash) ? new bytes(0) : _addrs[labelhash][cointype];
     }
 
     function text(
-        uint256 token,
+        bytes32 labelhash,
         string calldata key
     ) external view returns (string memory) {
-        return _isExpired(token) ? "" : _texts[token][key];
+        return _isExpired(labelhash) ? "" : _texts[labelhash][key];
     }
 
-    function contenthash(uint256 token) external view returns (bytes memory) {
-        return _isExpired(token) ? new bytes(0) : _chashes[token];
+    function contenthash(bytes32 labelhash) external view returns (bytes memory) {
+        return _isExpired(labelhash) ? new bytes(0) : _chashes[labelhash];
     }
 
-    function getExpiry(uint256 token) public view returns (uint256 expiry) {
-        return _isExpired(token) ? 0 : _expiries[token];
+    function getExpiry(bytes32 labelhash) public view returns (uint256 expiry) {
+        return _isExpired(labelhash) ? 0 : _expiries[labelhash];
     }
 
-    function available(uint256 token) external view returns (bool) {
-        return _isExpired(token);
+    function available(bytes32 labelhash) external view returns (bool) {
+        return _isExpired(labelhash);
     }
 
-    /// Utils to get a label from its labelhash
-    function labelFor(uint256 token) external view returns (string memory) {
-        return _labels[token];
+    // Utils to get a label from its labelhash
+    function labelFor(bytes32 labelhash) external view returns (string memory) {
+        return _labels[labelhash];
     }
 
-    ////////////
-    /// Setters
-    ////////////
+    //
+    // Setters
+    //
 
-    /// Contract level
+    // Contract level
     function setBaseURI(string memory _baseUri) external onlyRole(ADMIN_ROLE) {
         baseUri = _baseUri;
     }
 
-    /// Record level
+    // Record level
     function setAddr(
-        uint256 token,
+        bytes32 labelhash,
         uint256 coinType,
         bytes calldata value
-    ) external onlyTokenOperator(token) {
-        _setAddr(token, coinType, value);
+    ) external onlyTokenOperator(labelhash) {
+        _setAddr(labelhash, coinType, value);
     }
     function _setAddr(
-        uint256 token,
+        bytes32 labelhash,
         uint256 coinType,
         bytes memory value
     ) internal {
-        _addrs[token][coinType] = value;
-        emit AddrChanged(token, coinType, value);
+        _addrs[labelhash][coinType] = value;
+        emit AddrChanged(labelhash, coinType, value);
     }
 
     function setText(
-        uint256 token,
+        bytes32 labelhash,
         string calldata key,
         string calldata value
-    ) external onlyTokenOperator(token) {
-        _setText(token, key, value);
+    ) external onlyTokenOperator(labelhash) {
+        _setText(labelhash, key, value);
     }
     function _setText(
-        uint256 token,
+        bytes32 labelhash,
         string calldata key,
         string calldata value
     ) internal {
-        _texts[token][key] = value;
-        emit TextChanged(token, key, value);
+        _texts[labelhash][key] = value;
+        emit TextChanged(labelhash, key, value);
     }
 
     function setContenthash(
-        uint256 token,
+        bytes32 labelhash,
         bytes calldata value
-    ) external onlyTokenOperator(token) {
-        _setContenthash(token, value);
+    ) external onlyTokenOperator(labelhash) {
+        _setContenthash(labelhash, value);
     }
-    function _setContenthash(uint256 token, bytes calldata value) internal {
-        _chashes[token] = value;
-        emit ContenthashChanged(token, value);
+    function _setContenthash(bytes32 labelhash, bytes calldata value) internal {
+        _chashes[labelhash] = value;
+        emit ContenthashChanged(labelhash, value);
     }
 
     function setExpiry(
-        uint256 token,
+        bytes32 labelhash,
         uint64 expiry
     ) public onlyRole(REGISTRAR_ROLE) {
-        _expiries[token] = expiry;
+        _expiries[labelhash] = expiry;
     }
 
     function setRecords(
-        uint256 token,
+        bytes32 labelhash,
         Text[] calldata texts,
         Addr[] calldata addrs,
         bytes[] calldata chash
-    ) external onlyTokenOperator(token) {
+    ) external onlyTokenOperator(labelhash) {
         for (uint256 i; i < texts.length; i += 1) {
-            _setText(token, texts[i].key, texts[i].value);
+            _setText(labelhash, texts[i].key, texts[i].value);
         }
         for (uint256 i; i < addrs.length; i += 1) {
-            _setAddr(token, addrs[i].coinType, addrs[i].value);
+            _setAddr(labelhash, addrs[i].coinType, addrs[i].value);
         }
         if (chash.length == 1) {
-            _setContenthash(token, chash[0]);
+            _setContenthash(labelhash, chash[0]);
         }
     }
 }

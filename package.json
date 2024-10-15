@@ -2,10 +2,13 @@
 	"name": "polygon-gateway",
 	"version": "0.0.1",
 	"scripts": {
-		"start": "bun run test/serve.ts 8000"
+		"ezccip": "bun run test/serve.ts 8000",
+		"express": "bun run gateway/index.ts"
 	},
 	"devDependencies": {
 		"@adraffy/blocksmith": "^0.0.40",
+		"@whatwg-node/server": "^0.9.49",
+		"express": "^4.21.1",
 		"@resolverworks/ezccip": "^0.0.20",
 		"@types/bun": "^1.1.11",
 		"ethers": "^6.13.4"

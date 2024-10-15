@@ -26,7 +26,7 @@ export async function deployDemo(foundry: Foundry) {
 				return nft.text(token, key);
 			},
 			addr(type) {
-				return nft.addr(token, type);
+				return nft["addr(bytes32,uint256)"](token, type);
 			},
 			contenthash() {
 				return nft.contenthash(token);

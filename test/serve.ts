@@ -35,6 +35,6 @@ await serve(
 		port,
 		// 0xd00d726b2aD6C81E894DC6B87BE6Ce9c5572D2cd
 		signingKey:
-			"0xbd1e630bd00f12f0810083ea3bd2be936ead3b2fa84d1bd6690c77da043e9e02",
+			process.env.SIGNER_PRIVATE_KEY!,
 	}
 );
