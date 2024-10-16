@@ -1,112 +1,117 @@
+/// @author clowes.eth
+/// @author raffy.eth
+/// @company Unruggable
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-/// L1 Resolver for resolving names from Polygon using the 'simple polygon resolver'
-/// @author clowes.eth
-contract PolygonResolver {
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-    error OffchainLookup(address sender, string[] urls, bytes callData, bytes4 callbackFunction, bytes extraData);
+// https://github.com/ensdomains/ens-contracts/blob/staging/contracts/resolvers/profiles/IExtendedResolver.sol
+interface IExtendedResolver {
+    function resolve(
+        bytes calldata,
+        bytes calldata
+    ) external view returns (bytes memory);
+}
 
-    uint constant private COIN_TYPE_ETH = 60;
+// https://github.com/ensdomains/ens-contracts/blob/staging/contracts/registry/ENS.sol
+interface ENS {
+    function owner(bytes32 node) external view returns (address);
+}
 
-    /// ERC-165 => Standard Interface Detection
-    /// supportsInterface(bytes4)
-    bytes4 constant private INTERFACE_ID_ERC_165 = 0x01ffc9a7;
+// https://github.com/ensdomains/ens-contracts/blob/staging/contracts/reverseRegistrar/IReverseRegistrar.sol
+interface IReverseRegistrar {
+    function claim(address owner) external;
+}
+// https://adraffy.github.io/keccak.js/test/demo.html#algo=namehash&s=addr.reverse&escape=1&encoding=utf8
+bytes32 constant ADDR_REVERSE_NODE = 0x91d1777781884d03a6757a803996e38de2a42967fb37eeaca72729271025a9e2;
 
-    /// ENSIP-10 => Wildcard Resolution
-    /// resolve(bytes calldata name, bytes calldata data) external view returns(bytes)
-    /// https://ethtools.com/interface-database/IExtendedResolver
-    bytes4 constant private INTERFACE_ID_ENSIP_10 = 0x9061b923;
+// https://eips.ethereum.org/EIPS/eip-3668
+error OffchainLookup(
+    address sender,
+    string[] urls,
+    bytes callData,
+    bytes4 callbackFunction,
+    bytes extraData
+);
 
-    string public gatewayUrl;
-    address public owner;
+contract PolygonResolver is Ownable, IERC165, IExtendedResolver {
+    event GatewayURLsChanged(string[] newGatewayURLs);
+    event SignerChanged(address signer, bool allow);
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Unauthorized");
-        _;
+    error CCIPReadExpired(uint256 t); // ccip response is stale
+    error CCIPReadUntrusted(address signed);
+
+    string[] _urls;
+    mapping(address signer => bool allow) _signers;
+
+    constructor() Ownable(msg.sender) {}
+
+    function claim(ENS ens) external onlyOwner {
+        address owner = ens.owner(ADDR_REVERSE_NODE);
+        if (owner != address(0)) {
+            IReverseRegistrar(owner).claim(msg.sender);
+        }
     }
 
-    constructor(string memory _gatewayUrl) {
-        gatewayUrl = _gatewayUrl;
-        owner = msg.sender;
+    // https://ethtools.com/interface-database/ERC165
+    // https://ethtools.com/interface-database/IExtendedResolver
+    function supportsInterface(bytes4 x) external pure returns (bool) {
+        return
+            x == type(IERC165).interfaceId ||
+            x == type(IExtendedResolver).interfaceId;
     }
 
-    /**
-     * Implemented as part of the ERC165 interface => Standard Interface Detection
-     * https://ethtools.com/interface-database/ERC165
-     * https://eips.ethereum.org/EIPS/eip-165
-     */
-    function supportsInterface(bytes4 interfaceID) external pure returns (bool) {
-		return interfaceID == INTERFACE_ID_ERC_165 
-        || interfaceID == INTERFACE_ID_ENSIP_10;
-        //|| interfaceID == 0xbc1c58d1;
-	}
- 
-    
-    /**
-     * Implemented as part of the IExtendedResolver interface defined in ENSIP-10 => Wildcard Resolution
-     * https://ethtools.com/interface-database/IExtendedResolver
-     * ENSIP-10 - https://docs.ens.domains/ensip/10
-     */
-    function resolve(bytes calldata name, bytes calldata data) external view returns(bytes memory) {
+    function setSigner(address signer, bool allow) external onlyOwner {
+        _signers[signer] = allow;
+        emit SignerChanged(signer, allow);
+    }
 
-        (bytes32 labelhash, uint256 _nIdx) = readLabel(name, 0);
+    function setGatewayURLs(string[] memory urls) external onlyOwner {
+        _urls = urls;
+        emit GatewayURLsChanged(urls);
+    }
 
-        string[] memory urls = new string[](1);
-        urls[0] = gatewayUrl;
+    function gatewayURLs() external view returns (string[] memory) {
+        return _urls;
+    }
+
+    function resolve(
+        bytes calldata /*name*/,
+        bytes calldata /*data*/
+    ) external view returns (bytes memory) {
         revert OffchainLookup(
             address(this),
-            urls,
-            abi.encode(labelhash, data),
-            PolygonResolver.resolveCallback.selector,
-            name
+            _urls,
+            msg.data,
+            this.resolveCallback.selector,
+            msg.data
         );
     }
 
-
-    /**
-     */
-    function resolveCallback(bytes calldata response, bytes calldata extraData) external view returns(bytes memory) {
+    function resolveCallback(
+        bytes calldata ccip,
+        bytes calldata request
+    ) external view returns (bytes memory) {
+        
+        (bytes memory response, uint64 expires, bytes memory sig) = abi.decode(
+            ccip,
+            (bytes, uint64, bytes)
+        );
+        if (expires < block.timestamp) revert CCIPReadExpired(expires);
+        bytes32 hash = keccak256(
+            abi.encodePacked(
+                hex"1900",
+                address(this),
+                expires,
+                keccak256(request),
+                keccak256(response)
+            )
+        );
+        address signed = ECDSA.recover(hash, sig);
+        if (!_signers[signed]) revert CCIPReadUntrusted(signed);
         return response;
-    }
-
-
-    /*
-     * @dev Returns the keccak-256 hash of a byte range.
-     * @param self The byte string to hash.
-     * @param offset The position to start hashing at.
-     * @param len The number of bytes to hash.
-     * @return The hash of the byte range.
-     */
-    function keccak(
-        bytes memory self,
-        uint256 offset,
-        uint256 len
-    ) internal pure returns (bytes32 ret) {
-        require(offset + len <= self.length);
-        assembly {
-            ret := keccak256(add(add(self, 32), offset), len)
-        }
-    }
-
-    /**
-     * @dev Returns the keccak-256 hash of a DNS-encoded label, and the offset to the start of the next label.
-     * @param self The byte string to read a label from.
-     * @param idx The index to read a label at.
-     * @return labelhash The hash of the label at the specified index, or 0 if it is the last label.
-     * @return newIdx The index of the start of the next label.
-     */
-    function readLabel(
-        bytes memory self,
-        uint256 idx
-    ) internal pure returns (bytes32 labelhash, uint256 newIdx) {
-        require(idx < self.length, "readLabel: Index out of bounds");
-        uint256 len = uint256(uint8(self[idx]));
-        if (len > 0) {
-            labelhash = keccak(self, idx + 1, len);
-        } else {
-            labelhash = bytes32(0);
-        }
-        newIdx = idx + len + 1;
     }
 }

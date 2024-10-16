@@ -2,29 +2,28 @@
 
 An end to end solution for resolving names from a L2 chain using an ENSIP-10 compatible resolver deployed on L1 and a simple express gateway for facilitating cross chain communication.
 
-Keyed based on subname label such that the multiple 2LDs can resolve to the same values.
+Keyed based on subname label such that the L2 resolver can be 2LD agnostic.
 
-### Testing/Demo
+### Setup
 
-- Install dependencies with:
-```bash
-bun install
-forge install
-```
+1. Copy `.env.example` to `.env` and configure appropriately.
+1. `bun i`
+1. `forge install`
+1. `bun test`
 
-- **!!** Add your Infura key in `server-adapters.ts`
+### Example
 
-- Run the test script with:
+1. `bun run examples/PolygonResolver.ts`
 
-```bash
-bun test test/PolygonResolver.test.ts
-```
+### Run the ezccip serve demo
 
-### Running the gateway
+1. `bun ezccip`
+1. [Postman](https://resolverworks.github.io/ezccip.js/test/postman.html#endpoint=http%3A%2F%2Flocalhost%3A8000%2F&proto=ens&name=raffy&multi=inner&field=addr-&field=text-avatar)
 
-- **!!** Set the appropriate parameters in `index.ts`, namely your Infura API key, and your L2 registry/resolver address (`NFTRegistry.sol`).
-- Run the gateway using:
+### Run the express gateway
 
-```bash
-bun start
-```
+1. `bun express`
+
+
+**Note** When deploying `PolygonResolver.sol` to L1, remember to call `setGatewayURLs` and `setSigner` to configure it appropriately.
+The address you pass to `setSigner` should match the private key configured in `.env` for your gateway.
